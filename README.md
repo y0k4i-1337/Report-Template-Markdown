@@ -36,7 +36,10 @@ Examples:
 - [Pandoc](https://pandoc.org/installing.html)
 - LaTeX (eg. [TeX Live](http://www.tug.org/texlive/)) in order to get `pdflatex` or `xelatex`
 - [Eisvogel Pandoc LaTeX PDF Template](https://github.com/Wandmalfarbe/pandoc-latex-template#installation)
-- [p7zip](http://p7zip.sourceforge.net/) (if you want to use the script, for generating the archive)
+- [p7zip](http://p7zip.sourceforge.net/) (if you want to use the script, for
+  generating the archive)
+- [Ruby](https://www.ruby-lang.org/en/documentation/installation/) (if you want
+  to use the script). Tested with Ruby 3.2.1, 3.3.0.
 
 Examples for common distros:
 
@@ -111,6 +114,7 @@ titlepage-color          | titlepage-text-color | titlepage-rule-color
 `FFEFD5` (PapayaWhip)    | `000000` (Black)     | `000000` (Black)
 `FF8C00` (DarkOrange)    | `000000` (Black)     | `000000` (Black)
 `FFEF96` (no name)       | `50394C` (no name)   | `50394C` (no name)
+`820AD1` (Purple)        | `FFFAFA` (Snow)      | `FFFAFA` (Snow)
 
 Syntax highlight themes can be listed with `pandoc --list-highlight-styles`.
 
@@ -171,6 +175,12 @@ Incident Response:
 [epi]:https://github.com/epi052
 [xl-sec]:https://github.com/xl-sec
 [ceso]:https://github.com/ceso
+
+Custom templates:
+
+- **Black Box Penetration Test**
+  - [y0k4i](output/examples/BlackBoxPenTestReport_y0k4i_v1.pdf) - based on [TCM
+    Security Sample Pentest Report](https://github.com/hmaverickadams/TCM-Security-Sample-Pentest-Report/blob/master/TCMS%20-%20Demo%20Corp%20-%20Findings%20Report%20-%20Example%202.docx)
 
 Offensive Security course table:
 

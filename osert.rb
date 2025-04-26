@@ -146,12 +146,24 @@ certifications = [
   }
 ]
 
+custom = [
+  {
+    type: 'Black Box Penetration Test',
+    template: [
+      {
+        name: 'y0k4i Black Box Template v1',
+        path: 'src/BlackBoxPenTest-report-template_y0k4i_v1.md'
+      }
+    ]
+  }
+]
+
 options = {
   'resource-path': '.'
 }
 
 subtext = <<~HELPMSG
-  Markdown Templates for Offensive Security OSCP, OSWE, OSEE, OSWP, OSEP, OSED Exam Report.
+  Markdown Templates for Offensive Security OSCP, OSWE, OSEE, OSWP, OSEP, OSED Exam and Custom Reports.
 
   Sub-commands:
     init     :  Copy a template that you will use to write your report
@@ -177,6 +189,9 @@ subcommands = {
     opts.on('-o', '--output PDF', 'File path to store the PDF report')
     opts.on('-e', '--exam EXAM', 'The exam short name')
     opts.on('-s', '--osid OSID', 'Your Offensive Security ID')
+    opts.on('--no-osid', 'Do not ask for OSID (useful for custom templates)') do
+      options[:no_osid] = true
+    end
     opts.on('-r', '--resource-path PATH', 'Complementary resources (e.g. images) path to include [Default: ./src]')
   end
 }
@@ -204,26 +219,53 @@ end
 begin
   case command
   when 'init'
-    # Choose a certification
-    puts '[+] Choose a Certification:'
-    certifications.each_with_index do |c, i|
-      puts "#{colors[:red]}#{i}. #{c[:exam]}#{colors[:nocolor]}"
-    end
+    # Choose a template type
+    puts '[+] Choose a Template Type:'
+    puts '0. Offensive Security'
+    puts '1. Custom'
     puts_prompt
-    cert = certifications[gets.chomp.to_i]
+    choice = gets.chomp
+    if choice == '0'
+      # Choose a certification
+      puts '[+] Choose a Certification:'
+      certifications.each_with_index do |c, i|
+        puts "#{colors[:red]}#{i}. #{c[:exam]}#{colors[:nocolor]}"
+      end
+      puts_prompt
+      cert = certifications[gets.chomp.to_i]
 
-    # Choose a template
-    puts '[+] Choose a Template:'
-    cert[:template].each_with_index do |t, i|
-      puts "#{colors[:red]}#{i}. [#{cert[:exam]}] #{t[:name]}#{colors[:nocolor]}"
+      # Choose a template
+      puts '[+] Choose a Template:'
+      cert[:template].each_with_index do |t, i|
+        puts "#{colors[:red]}#{i}. [#{cert[:exam]}] #{t[:name]}#{colors[:nocolor]}"
+      end
+      puts_prompt
+      src = cert[:template][gets.chomp.to_i][:path]
+
+      # Enter your OS id
+      puts '[+] Enter your OS ID:'
+      print '> OS-'
+      osid = "OS-#{gets.chomp}"
+    elsif choice == '1'
+      # Choose a custom template
+      puts '[+] Choose a Report Type:'
+      custom.each_with_index do |c, i|
+        puts "#{colors[:red]}#{i}. #{c[:type]}#{colors[:nocolor]}"
+      end
+      puts_prompt
+      type = custom[gets.chomp.to_i]
+
+      # Choose a template
+      puts '[+] Choose a Template:'
+      type[:template].each_with_index do |t, i|
+        puts "#{colors[:red]}#{i}. [#{type[:type]}] #{t[:name]}#{colors[:nocolor]}"
+      end
+      puts_prompt
+      src = type[:template][gets.chomp.to_i][:path]
+    else
+      puts 'Invalid choice. Exiting...'
+      exit
     end
-    puts_prompt
-    src = cert[:template][gets.chomp.to_i][:path]
-
-    # Enter your OS id
-    puts '[+] Enter your OS ID:'
-    print '> OS-'
-    osid = "OS-#{gets.chomp}"
 
     # Enter your email address
     puts_prompt '[+] Enter your email address as author:'
@@ -236,6 +278,13 @@ begin
       output = gets.chomp
     end
 
+    # Check if the output directory exists
+    # If not, create it
+    unless File.directory?(output)
+      puts "[+] Creating directory #{output}..."
+      FileUtils.mkdir_p(output)
+    end
+
     # The chosen template will be saved in the chosen directory
     begin
       FileUtils.cp(src, output)
@@ -245,7 +294,11 @@ begin
 
     # Replace metadata in the report
     report = "#{output}/#{File.basename(src)}"
-    sed(report, /^author:.*/, %(author: ["#{author}", "OSID: #{osid}"]))
+    if choice == '0'
+      sed(report, /^author:.*/, %(author: ["#{author}"]))
+    else
+      sed(report, /^author:.*/, %(author: ["#{author}", "OSID: #{osid}"]))
+    end
     sed(report, /^date:.*/, %(date: "#{Date.today}"))
 
     print "[+] The #{colors[:red]}#{File.basename(src)}#{colors[:nocolor]} file is saved in"
@@ -282,7 +335,7 @@ begin
 
     if options[:exam]
       exam = options[:exam]
-    else
+    elsif !options[:no_osid]
       puts '[+] Choose a Certification:'
       certifications.each_with_index do |c, i|
         puts "#{colors[:red]}#{i}. #{c[:exam]}#{colors[:nocolor]}"
@@ -292,7 +345,9 @@ begin
       exam = cert[:exam]
     end
 
-    if options[:osid]
+    if options[:no_osid]
+      puts '[+] Skipping OSID...'
+    elsif options[:osid]
       osid = options[:osid]
     else
       puts '[+] Enter your OS ID:'
@@ -302,7 +357,7 @@ begin
 
     # Generating report
     puts '[+] Generating report...'
-    pdf = "#{output}/#{exam}-#{osid}-Exam-Report.pdf"
+    pdf = options[:no_osid] ? "#{output}/Report.pdf" : "#{output}/#{exam}-#{osid}-Exam-Report.pdf"
     `pandoc #{input.shellescape} -o #{pdf.shellescape} \
       --from markdown+yaml_metadata_block+raw_html \
       --template eisvogel \
@@ -321,14 +376,14 @@ begin
     choice = gets.chomp
     if choice.downcase == 'y' || choice.empty?
       viewer = fork do
-        exec "xdg-open #{pdf.shellescape}"
+        exec "open #{pdf.shellescape}"
       end
       Process.detach(viewer)
     end
 
     # Generating archive
     puts '[+] Generating archive...'
-    archive = "#{output}/#{exam}-#{osid}-Exam-Report.7z"
+    archive = options[:no_osid] ? "#{output}/Report.7z" : "#{output}/#{exam}-#{osid}-Exam-Report.7z"
     `7z a #{archive.shellescape} #{File.expand_path(pdf.shellescape)}`
 
     # Optional lab report
