@@ -256,3 +256,7 @@ AUTHORITY\SYSTEM
 ```md
 NT AUTHORITY\\SYSTEM
 ```
+
+## How to change font to support more Unicode characters
+
+See https://github.com/Wandmalfarbe/pandoc-latex-template/issues/96#issuecomment-3016690275.
