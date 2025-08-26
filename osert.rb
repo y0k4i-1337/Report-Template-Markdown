@@ -308,16 +308,28 @@ begin
     puts ' for getting your report.'
   when 'generate'
     puts '[+] Preparing your final report...'
+    # Load custom styles from ~/.local/share/pandoc/highlights
+    custom_styles = []
+    Dir.glob("#{Dir.home}/.local/share/pandoc/highlights/*.theme").each do |file|
+      custom_styles << File.basename(file, '.theme')
+    end
+
     # Choose syntax highlight style
-    style = 'breezedark'
+    style = 'dracula'
     puts "[+] Choose syntax highlight style [#{style}]:"
     styles = `pandoc --list-highlight-styles`.split("\n")
+    # Add custom styles to the list
+    styles.concat(custom_styles)
     styles.each_with_index do |s, i|
       puts "#{colors[:red]}#{i}. #{s}#{colors[:nocolor]}"
     end
     puts_prompt
     choice = gets.chomp
     style = styles[choice.to_i] unless choice.empty?
+    # If custom style, set full path
+    if custom_styles.include?(style)
+      style = "#{Dir.home}/.local/share/pandoc/highlights/#{style}.theme"
+    end
 
     if options[:input]
       input = options[:input]
@@ -362,10 +374,12 @@ begin
       --from markdown+yaml_metadata_block+raw_html \
       --template eisvogel \
       --table-of-contents \
+      --list-of-figures \
       --toc-depth 6 \
       --number-sections \
       --top-level-division=chapter \
       --highlight-style #{style} \
+      --filter pandoc-crossref \
       --resource-path=.:/usr/share/osert/src:src \
       --resource-path=#{options[:'resource-path'].shellescape}
     `

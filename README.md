@@ -34,6 +34,7 @@ Examples:
 ## Requirements
 
 - [Pandoc](https://pandoc.org/installing.html)
+- [Pandoc Crossref filter](https://github.com/lierdakil/pandoc-crossref)
 - LaTeX (eg. [TeX Live](http://www.tug.org/texlive/)) in order to get `pdflatex` or `xelatex`
 - [Eisvogel Pandoc LaTeX PDF Template](https://github.com/Wandmalfarbe/pandoc-latex-template#installation)
 - [p7zip](http://p7zip.sourceforge.net/) (if you want to use the script, for
@@ -91,10 +92,12 @@ pandoc src/OSCP-exam-report-template_whoisflynn_v3.2.md \
 --from markdown+yaml_metadata_block+raw_html \
 --template eisvogel \
 --table-of-contents \
+--list-of-figures \
 --toc-depth 6 \
 --number-sections \
 --top-level-division=chapter \
 --highlight-style breezedark \
+--filter pandoc-crossref \
 --resource-path=.:src
 ```
 
@@ -117,6 +120,13 @@ titlepage-color          | titlepage-text-color | titlepage-rule-color
 `820AD1` (Purple)        | `FFFAFA` (Snow)      | `FFFAFA` (Snow)
 
 Syntax highlight themes can be listed with `pandoc --list-highlight-styles`.
+
+## Custom highligh themes
+
+The script will automatically include any custom theme placed at `${HOME}/.local/share/pandoc/hightlights`.
+
+For convenience, the `dracula` theme is available in this repo at [highlights/dracula.theme](highlights/dracula.theme).
+
 
 ## Available templates
 
