@@ -192,6 +192,16 @@ subcommands = {
     opts.on('--no-osid', 'Do not ask for OSID (useful for custom templates)') do
       options[:no_osid] = true
     end
+    opts.on('--no-labreport', 'Do not ask to include lab report') do
+      options[:no_labreport] = true
+    end
+    opts.on('--preview', 'Open the generated PDF report') do
+      options[:preview] = true
+    end
+    opts.on('--no-preview', 'Do not ask to open the generated PDF report') do
+      options[:no_preview] = true
+    end
+    opts.on('-t', '--theme STYLE', 'Highlight style (theme) to use')
     opts.on('-r', '--resource-path PATH', 'Complementary resources (e.g. images) path to include [Default: ./src]')
   end
 }
@@ -308,24 +318,36 @@ begin
     puts ' for getting your report.'
   when 'generate'
     puts '[+] Preparing your final report...'
+
     # Load custom styles from ~/.local/share/pandoc/highlights
     custom_styles = []
     Dir.glob("#{Dir.home}/.local/share/pandoc/highlights/*.theme").each do |file|
       custom_styles << File.basename(file, '.theme')
     end
-
-    # Choose syntax highlight style
-    style = 'dracula'
-    puts "[+] Choose syntax highlight style [#{style}]:"
     styles = `pandoc --list-highlight-styles`.split("\n")
     # Add custom styles to the list
     styles.concat(custom_styles)
-    styles.each_with_index do |s, i|
-      puts "#{colors[:red]}#{i}. #{s}#{colors[:nocolor]}"
+
+    if options[:theme]
+      style = options[:theme]
+      # Test if provided value is valid
+      unless styles.include?(style)
+        puts "[!] Invalid highlight style: #{style}"
+        exit 1
+      end
+    else
+      # Choose syntax highlight style
+      style = 'dracula'
+      puts "[+] Choose syntax highlight style [#{style}]:"
+    
+      styles.each_with_index do |s, i|
+        puts "#{colors[:red]}#{i}. #{s}#{colors[:nocolor]}"
+      end
+      puts_prompt
+      choice = gets.chomp
+      style = styles[choice.to_i] unless choice.empty?
     end
-    puts_prompt
-    choice = gets.chomp
-    style = styles[choice.to_i] unless choice.empty?
+    
     # If custom style, set full path
     if custom_styles.include?(style)
       style = "#{Dir.home}/.local/share/pandoc/highlights/#{style}.theme"
@@ -367,6 +389,7 @@ begin
       osid = "OS-#{gets.chomp}"
     end
 
+
     # Generating report
     puts '[+] Generating report...'
     pdf = options[:no_osid] ? "#{output}/Report.pdf" : "#{output}/#{exam}-#{osid}-Exam-Report.pdf"
@@ -386,13 +409,18 @@ begin
     puts "[+] PDF generated at #{colors[:red]}#{pdf}#{colors[:nocolor]}"
 
     # Preview
-    puts_prompt '[+] Do you want to preview the report? [Y/n]'
-    choice = gets.chomp
-    if choice.downcase == 'y' || choice.empty?
-      viewer = fork do
-        exec "open #{pdf.shellescape}"
+    unless options[:no_preview]
+      choice = 'n'
+      unless options[:preview]
+        puts_prompt '[+] Do you want to preview the report? [Y/n]'
+        choice = gets.chomp
       end
-      Process.detach(viewer)
+      if options[:preview] || choice.downcase == 'y' || choice.empty?
+        viewer = fork do
+          exec "open #{pdf.shellescape}"
+        end
+        Process.detach(viewer)
+      end
     end
 
     # Generating archive
@@ -401,13 +429,15 @@ begin
     `7z a #{archive.shellescape} #{File.expand_path(pdf.shellescape)}`
 
     # Optional lab report
-    puts_prompt '[+] Do you want to add an external lab report? [Y/n]'
-    choice = gets.chomp
-    if choice.downcase == 'y' || choice.empty?
-      puts_prompt '[+] Write the path of your lab PDF:'
-      lab = gets.chomp
-      puts '[+] Updating archive...'
-      `7z a #{archive.shellescape} #{File.expand_path(lab.shellescape)}`
+    unless options[:no_labreport]
+      puts_prompt '[+] Do you want to add an external lab report? [Y/n]'
+      choice = gets.chomp
+      if choice.downcase == 'y' || choice.empty?
+        puts_prompt '[+] Write the path of your lab PDF:'
+        lab = gets.chomp
+        puts '[+] Updating archive...'
+        `7z a #{archive.shellescape} #{File.expand_path(lab.shellescape)}`
+      end
     end
 
     puts "[+] Archive generated at #{colors[:red]}#{archive}#{colors[:nocolor]}"
