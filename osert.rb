@@ -337,7 +337,7 @@ begin
       end
     else
       # Choose syntax highlight style
-      style = 'dracula'
+      style = 'breezedark'
       puts "[+] Choose syntax highlight style [#{style}]:"
     
       styles.each_with_index do |s, i|

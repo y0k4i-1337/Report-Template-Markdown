@@ -15,6 +15,16 @@ book: true
 classoption: oneside
 code-block-font-size: \tiny
 table-use-row-colors: true
+code-block-font-size: \scriptsize
+figPrefix:
+  - Figure
+  - Figures
+secPrefix:
+  - Section
+  - Sections
+tblPrefix:
+  - Table
+  - Tables
 ---
 # OSWE Exam Report
 

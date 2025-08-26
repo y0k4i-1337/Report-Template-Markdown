@@ -14,6 +14,15 @@ titlepage-rule-height: 2
 book: true
 classoption: oneside
 code-block-font-size: \scriptsize
+figPrefix:
+  - Figure
+  - Figures
+secPrefix:
+  - Section
+  - Sections
+tblPrefix:
+  - Table
+  - Tables
 ---
 # Offensive Security OSDA Exam Report
 
